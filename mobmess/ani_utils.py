@@ -725,19 +725,20 @@ def mummer_fast_deltafilter(mummer_delta_file, outfile, n_jobs=None, delta_cmd=N
             utils.tprint(chunk_i, end=',')
             outfile_chunk = os.path.join(f, '{}_filter'.format(chunk_i))
 
-            # Create a bash script with a bunch of commands
-            cmd_list = []
-            for i, block in enumerate(chunk_list):
-                infile = os.path.join(f, '{}_{}'.format(chunk_i, i))
-                with open(infile, 'wt') as g:
-                    g.write(header + '>' + block)
-                cmd_list.append('{0} -q -r {1} >> {2}'.format(delta_cmd, infile, outfile_chunk))
             infile_script = os.path.join(f, '{}.sh'.format(chunk_i))
             with open(infile_script, 'wt') as g:
                 g.write('#!/bin/bash\n')
-                for cmd in cmd_list:
-                    g.write(cmd + '\n')
-            p = utils.run_cmd('bash {}'.format(infile_script), shell=True, tee=False, wait=False)        
+                g.write('touch {0}'.format(outfile_chunk))  # clear previous runs' data
+                for i, block in enumerate(chunk_list):
+                    # just for safety, we ensure '"' and '\\' are not in the alignment (this should not happen anyway
+                    # I think)
+                    block_str_is_safe = ('"' not in block) and ('\\' not in block)
+                    assert block_str_is_safe, "Error: '\"' or '\\' found in alignment block {}".format(block)
+
+                    block_as_escaped_str = repr(header + ">" + block)[1:-1]
+                    infile = '<(echo -e "{}")'.format(block_as_escaped_str)
+                    g.write('{0} -q -r {1} >> {2}\n'.format(delta_cmd, infile, outfile_chunk))
+            p = utils.run_cmd('bash {}'.format(infile_script), shell=True, tee=False, wait=False)
 
             p_list.append(p)
             outfile_chunk_list.append(outfile_chunk)
