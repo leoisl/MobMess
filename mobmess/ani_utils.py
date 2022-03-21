@@ -728,7 +728,7 @@ def mummer_fast_deltafilter(mummer_delta_file, outfile, n_jobs=None, delta_cmd=N
             infile_script = os.path.join(f, '{}.sh'.format(chunk_i))
             with open(infile_script, 'wt') as g:
                 g.write('#!/bin/bash\n')
-                g.write('touch {0}'.format(outfile_chunk))  # clear previous runs' data
+                g.write('touch {0}\n'.format(outfile_chunk))  # clear previous runs' data
                 for i, block in enumerate(chunk_list):
                     # just for safety, we ensure '"' and '\\' are not in the alignment (this should not happen anyway
                     # I think)
