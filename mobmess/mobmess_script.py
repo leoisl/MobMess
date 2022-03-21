@@ -30,7 +30,11 @@ def infer_systems(args):
             nucmer_summary_output = tmp / 'mummer_align.delta.qr_filter.summary.pkl.blp'
 
             # Run nucmer (from the MUMmer package) to align sequences
-            ani_utils.run_nucmer(args.sequences, nucmer_first_output, threads=threads)
+            if not args.skip_nucmer:
+                utils.tprint("Running nucmer")
+                ani_utils.run_nucmer(args.sequences, nucmer_first_output, threads=threads)
+            else:
+                utils.tprint("Skipping nucmer")
 
             # Use MUMmer's delta-filter tool to remove overlapping alignment blocks, to create a set of blocks that represents a
             # 1-to-1 alignment between very pair of sequences
@@ -173,6 +177,9 @@ def get_parser():
     optional.add_argument(
         '-a', '--ani', dest='ani', default=None,
         help="""Precomputed file of MUMmer alignment results. Specifying this will skip computing MUMmer alignments, saving time.""")
+    optional.add_argument(
+        '--skip-nucmer', dest='skip_nucmer', action="store_true",
+        help="Skips nucmer.")
     optional.add_argument(
         '-T', '--threads', dest='threads', type=int, default=1,
         help="""Number of threads to do pairwise MUMmer alignments. Default: 1 thread""")
